@@ -23,6 +23,7 @@ const props = defineProps<Props>();
 const { t } = useI18n();
 
 const tocItems = ref<TocItem[]>([]);
+const tocListEl = ref<HTMLElement | null>(null);
 const activeIndex = ref(-1);
 const sectionProgress = ref(0);
 const articleProgress = ref(0);
@@ -37,6 +38,7 @@ let uiObserver: MutationObserver | null = null;
 let scrollContainerEl: HTMLElement | null = null;
 let rebuildRaf: number | null = null;
 let scrollRaf: number | null = null;
+let lastAutoScrolledIndex = -1;
 
 const containerStyle = computed(() => ({
   top: `${topOffset.value}px`,
@@ -125,6 +127,27 @@ function getArticleProgress(container: HTMLElement): number {
 function getMarkerFillPercent(index: number): number {
   if (index !== activeIndex.value) return 0;
   return sectionProgress.value;
+}
+
+function autoScrollTocToActive(index: number): void {
+  const list = tocListEl.value;
+  if (!list || index < 0) return;
+  if (list.scrollHeight <= list.clientHeight + 1) return;
+
+  const item = list.querySelector<HTMLElement>(`[data-toc-index="${index}"]`);
+  if (!item) return;
+
+  const itemTop = item.offsetTop;
+  const targetTop = itemTop - (list.clientHeight - item.offsetHeight) / 2;
+  const maxTop = Math.max(0, list.scrollHeight - list.clientHeight);
+  const nextTop = Math.max(0, Math.min(targetTop, maxTop));
+  const delta = Math.abs(nextTop - list.scrollTop);
+  if (delta < 6) return;
+
+  list.scrollTo({
+    top: nextTop,
+    behavior: 'smooth',
+  });
 }
 
 function buildToc(): void {
@@ -216,6 +239,7 @@ function updateActiveSection(): void {
     activeIndex.value = -1;
     sectionProgress.value = 0;
     articleProgress.value = container ? getArticleProgress(container) : 0;
+    lastAutoScrolledIndex = -1;
     return;
   }
 
@@ -233,6 +257,10 @@ function updateActiveSection(): void {
   }
 
   activeIndex.value = currentIndex;
+  if (currentIndex !== lastAutoScrolledIndex) {
+    autoScrollTocToActive(currentIndex);
+    lastAutoScrolledIndex = currentIndex;
+  }
 
   const start = items[currentIndex].offsetTop;
   const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
@@ -423,8 +451,9 @@ onBeforeUnmount(() => {
       </div>
 
       <ul
-        class="relative z-[1] flex w-full max-h-full flex-col items-end gap-1 overflow-hidden group-hover/toclist:overflow-auto">
-        <li v-for="(item, index) in tocItems" :key="item.id" class="w-full" :data-level="item.level">
+        ref="tocListEl"
+        class="toc-list-scroll relative z-[1] flex w-full max-h-full flex-col items-end gap-1 overflow-y-scroll [scrollbar-gutter:stable_both-edges]">
+        <li v-for="(item, index) in tocItems" :key="item.id" class="w-full" :data-level="item.level" :data-toc-index="index">
           <button
             class="group/item flex w-full cursor-pointer items-center justify-end gap-2 rounded px-1 py-0.5 transition-colors"
             :style="{ '--toc-level': String(item.level) }" @click="scrollToHeading(item)">
@@ -466,6 +495,40 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.toc-list-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.group\/toclist:hover .toc-list-scroll {
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.toc-list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.toc-list-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.toc-list-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.group\/toclist:hover .toc-list-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+}
+
+.toc-list-scroll::-webkit-scrollbar-thumb:hover {
+  background: transparent;
+}
+
+.group\/toclist:hover .toc-list-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
 @container (max-width: 150px) {
   .toc-text-visible {
     opacity: 0;
