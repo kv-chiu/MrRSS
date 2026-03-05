@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Resolved multiple minor styling inconsistencies. (#752, #753)
+- Resolved multiple minor styling inconsistencies. (#752, #753, #755)
 
 ## [1.3.21] - 2026-02-27
 

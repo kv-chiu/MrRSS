@@ -675,6 +675,11 @@ watch(
   () => props.article?.id,
   async (newId, oldId) => {
     if (newId !== oldId) {
+      // Scroll to top when switching articles
+      if (articleScrollContainer.value) {
+        articleScrollContainer.value.scrollTop = 0;
+      }
+
       // Cancel any ongoing summary generation for the previous article
       if (oldId !== undefined) {
         cancelSummaryGeneration(oldId);
