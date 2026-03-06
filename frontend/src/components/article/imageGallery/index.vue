@@ -119,6 +119,35 @@ function handleScroll(): void {
 }
 
 /**
+ * Ensure the container is filled with enough content so users can scroll.
+ * If the initial content fits without scrolling, load additional pages
+ * until either the container becomes scrollable (beyond threshold) or
+ * there is no more content.
+ */
+async function ensureFill(): Promise<void> {
+  const container = masonryLayout.containerRef.value;
+  if (!container) return;
+
+  // Keep loading while there are more pages and the container isn't tall enough
+  while (
+    galleryData.hasMore.value &&
+    !galleryData.isLoading.value &&
+    container.scrollHeight - container.clientHeight <= SCROLL_THRESHOLD_PX
+  ) {
+    // Load next page
+    galleryData.page.value = galleryData.page.value + 1;
+    await galleryData.fetchImages(true);
+
+    // Allow DOM to update and recalculate layout
+    await nextTick();
+    masonryLayout.arrangeColumns();
+
+    // If container ref was cleared during fetch (unmount), stop
+    if (!masonryLayout.containerRef.value) break;
+  }
+}
+
+/**
  * Open image viewer
  */
 async function openImage(article: Article): Promise<void> {
@@ -362,6 +391,11 @@ watch(
       container.removeEventListener('scroll', handleScroll);
       // Add the scroll listener
       container.addEventListener('scroll', handleScroll);
+
+      // If the container was just mounted, try to fill it with enough items
+      // so that users can scroll even on large viewports.
+      // Fire-and-forget: don't block mounting.
+      void ensureFill();
     }
   },
   { immediate: true }
@@ -370,10 +404,11 @@ watch(
 // Watch for articles changes and rearrange columns
 watch(
   () => galleryData.articles.value,
-  () => {
-    nextTick(() => {
-      masonryLayout.arrangeColumns();
-    });
+  async () => {
+    await nextTick();
+    masonryLayout.arrangeColumns();
+    // Ensure enough content is loaded so the container can scroll
+    await ensureFill();
   }
 );
 
@@ -418,8 +453,16 @@ watch(
   }
 );
 
-onMounted(() => {
-  galleryData.fetchImages();
+onMounted(async () => {
+  // Initial fetch and ensure container is filled
+  await galleryData.fetchImages();
+
+  // Recalculate columns after initial fetch
+  await nextTick();
+  masonryLayout.calculateColumns();
+
+  // Try to load more if initial content doesn't allow scrolling
+  await ensureFill();
 
   // Setup resize observer
   masonryLayout.setupResizeObserver();
