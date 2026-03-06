@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { PhImage, PhHeart } from '@phosphor-icons/vue';
+import { PhImage, PhHeart, PhYoutubeLogo } from '@phosphor-icons/vue';
 import { computed } from 'vue';
 import type { Article } from '@/types/models';
 import { getProxiedMediaUrl } from '@/utils/mediaProxy';
+import { isYouTubeArticle, extractYouTubeVideoId, getYouTubeThumbnailUrl } from '@/utils/youtube';
 
 interface Props {
   article: Article;
@@ -20,13 +21,21 @@ const emit = defineEmits<{
 }>();
 
 /**
- * Get proxied image URL for cover image
- * Cover images (image_url) are always cached to ensure they display correctly
- * This prevents hotlinking issues and ensures consistent loading
+ * Check if this article has a YouTube video
  */
-const proxiedImageUrl = computed(() => {
-  // Always use proxy with force_cache=true for cover images
-  // Cover images are the main image shown in the gallery grid
+const isYouTube = computed(() => isYouTubeArticle(props.article));
+
+/**
+ * Get the display URL (image or YouTube thumbnail)
+ */
+const displayUrl = computed(() => {
+  if (isYouTube.value && props.article.video_url) {
+    const videoId = extractYouTubeVideoId(props.article.video_url);
+    if (videoId) {
+      return getYouTubeThumbnailUrl(videoId, 'high');
+    }
+  }
+  // Use proxy with force_cache=true for cover images
   return getProxiedMediaUrl(props.article.image_url, undefined, true);
 });
 
@@ -79,11 +88,21 @@ function formatDate(dateString: string): string {
     <div
       class="relative overflow-hidden rounded-lg bg-bg-secondary transition-transform duration-200 hover:scale-[1.02]"
     >
-      <img :src="proxiedImageUrl" :alt="article.title" class="w-full h-auto block" loading="lazy" />
+      <img :src="displayUrl" :alt="article.title" class="w-full h-auto block" loading="lazy" />
+
+      <!-- YouTube indicator -->
+      <div
+        v-if="isYouTube"
+        class="absolute inset-0 flex items-center justify-center pointer-events-none"
+      >
+        <div class="bg-red-600/90 rounded-full p-4 shadow-lg">
+          <PhYoutubeLogo :size="32" weight="fill" class="text-white" />
+        </div>
+      </div>
 
       <!-- Image count indicator -->
       <div
-        v-if="imageCount > 1"
+        v-if="imageCount > 1 && !isYouTube"
         class="absolute bottom-2 left-2 px-2 py-1 rounded-full bg-black/60 text-white text-xs font-semibold backdrop-blur-sm z-10 flex items-center gap-1 transition-all duration-200"
         :class="{ 'group-hover:bottom-20': !showTextOverlay }"
       >
