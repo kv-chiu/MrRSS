@@ -479,6 +479,8 @@ const zh: TranslationMessages = {
       feedLastUpdateStatus: '订阅源更新状态',
       updateSuccess: '成功',
       updateFailed: '失败',
+      logicPrecedence:
+        '条件按以下优先级进行计算：NOT > AND > OR。这意味着 NOT 最先计算，然后是 AND，最后是 OR。',
     },
     rule: {
       actions: '操作',
@@ -497,6 +499,8 @@ const zh: TranslationMessages = {
       rulesDesc: '创建自动化规则以自动处理文章',
       ruleAppliedSuccess: '规则应用成功',
       savedSuccess: '规则保存成功',
+      logicPrecedence:
+        '条件按以下优先级进行计算：NOT > AND > OR。这意味着 NOT 最先计算，然后是 AND，最后是 OR。',
     },
     opml: {
       export: '导出订阅源',

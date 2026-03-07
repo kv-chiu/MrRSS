@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+**BREAKING**: The logic operator precedence for filter conditions and rules has been standardized to `NOT` > `AND` > `OR`. This means that `NOT` conditions will be evaluated first, followed by `AND`, and then `OR`. Please review your existing filters and rules to ensure they behave as expected with this precedence.
+
 ### Added
 
 - Supported floating TOC feature for articles. (@MidnightCrowing)
@@ -16,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Optimized RSSHub connection handling to improve performance and reliability.
+- Changed evaluation methods for filter conditions and added logic precedence tips in filter and rule modals. (#756)
 
 ### Fixed
 

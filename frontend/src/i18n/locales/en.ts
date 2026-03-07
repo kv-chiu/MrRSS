@@ -487,6 +487,8 @@ const en: TranslationMessages = {
       feedLastUpdateStatus: 'Feed Update Status',
       updateSuccess: 'Success',
       updateFailed: 'Failed',
+      logicPrecedence:
+        'Conditions are evaluated with the following precedence: NOT > AND > OR. This means NOT is evaluated first, then AND, and finally OR.',
     },
     rule: {
       actions: 'Actions',
@@ -505,6 +507,8 @@ const en: TranslationMessages = {
       rulesDesc: 'Create automation rules to automatically perform actions on articles',
       ruleAppliedSuccess: 'Rule applied successfully',
       savedSuccess: 'Rule saved successfully',
+      logicPrecedence:
+        'Conditions are evaluated with the following precedence: NOT > AND > OR. This means NOT is evaluated first, then AND, and finally OR.',
     },
     opml: {
       export: 'Export Feeds',
